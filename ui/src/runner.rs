@@ -8,6 +8,8 @@
 //! the render loop never blocks on I/O.
 
 use std::io::{BufRead, BufReader, Read};
+#[cfg(target_os = "windows")]
+use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
@@ -74,6 +76,7 @@ impl Runner {
             cmd.arg(a);
         }
         cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
+        hide_console(&mut cmd);
 
         let mut child = cmd.spawn()?;
         let (tx, rx) = channel::<LogLine>();
@@ -176,15 +179,17 @@ fn pump<R: Read + Send + 'static>(stream: R, tx: std::sync::mpsc::Sender<LogLine
 /// Uma chamada unica na inicializacao custa poucos milissegundos e mantem a
 /// arvore de dependencias em um unico crate.
 pub fn is_elevated() -> bool {
-    Command::new("powershell.exe")
-        .args([
-            "-NoProfile",
-            "-NonInteractive",
-            "-Command",
-            "([Security.Principal.WindowsPrincipal]\
+    let mut command = Command::new("powershell.exe");
+    command.args([
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "([Security.Principal.WindowsPrincipal]\
              [Security.Principal.WindowsIdentity]::GetCurrent())\
              .IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)",
-        ])
+    ]);
+    hide_console(&mut command);
+    command
         .output()
         .map(|o| {
             String::from_utf8_lossy(&o.stdout)
@@ -192,4 +197,60 @@ pub fn is_elevated() -> bool {
                 .eq_ignore_ascii_case("true")
         })
         .unwrap_or(false)
+}
+
+/// Reabre o executavel atual com o verbo `RunAs`, exibindo apenas o UAC e a
+/// nova janela grafica. O PowerShell usado para pedir elevacao fica oculto.
+#[cfg(target_os = "windows")]
+pub fn relaunch_elevated(lang: &str, script: &Path) -> std::io::Result<()> {
+    let executable = std::env::current_exe()?;
+    let working_directory = executable.parent().unwrap_or_else(|| Path::new("."));
+    let arguments = format!("--lang {lang} --script \"{}\"", script.display());
+    let ps_command = format!(
+        "$ErrorActionPreference='Stop'; Start-Process -FilePath '{}' -Verb RunAs -ArgumentList '{}' -WorkingDirectory '{}'",
+        escape_powershell(&executable.to_string_lossy()),
+        escape_powershell(&arguments),
+        escape_powershell(&working_directory.to_string_lossy())
+    );
+
+    let mut command = Command::new("powershell.exe");
+    command.args(["-NoProfile", "-NonInteractive", "-Command", &ps_command]);
+    hide_console(&mut command);
+    let status = command.status()?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "a elevacao foi cancelada ou recusada / elevation was cancelled or denied",
+        ))
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn show_error_dialog(message: &str) {
+    let script = format!(
+        "Add-Type -AssemblyName PresentationFramework; [System.Windows.MessageBox]::Show('{}','WinLean','OK','Error') | Out-Null",
+        escape_powershell(message)
+    );
+    let mut command = Command::new("powershell.exe");
+    command.args(["-NoProfile", "-NonInteractive", "-Command", &script]);
+    hide_console(&mut command);
+    let _ = command.status();
+}
+
+#[cfg(target_os = "windows")]
+fn escape_powershell(value: &str) -> String {
+    value.replace('\'', "''")
+}
+
+fn hide_console(command: &mut Command) {
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+    #[cfg(not(target_os = "windows"))]
+    let _ = command;
 }

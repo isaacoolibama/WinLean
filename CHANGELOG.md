@@ -3,6 +3,21 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.2.0] - 2026-08-13
+
+### Adicionado / Added
+- **Aplicativo gráfico para Windows** em Rust com HTML/CSS embutido, presets em
+  cartões, seleção visual de módulos, confirmação antes de aplicar e log ao vivo.
+- Verificação e instalação automática do Microsoft WebView2 Runtime no instalador.
+- Atualização automática do motor e da interface ao executar novamente o instalador.
+
+### Alterado / Changed
+- O PowerShell agora roda oculto como motor; iniciar pelo atalho abre diretamente
+  a janela gráfica, sem console visível.
+- A interface do Windows migrou de `ratatui` para `winit` + `wry`. O TUI segue
+  disponível fora do Windows para desenvolvimento.
+- O guia interno de publicação foi removido do repositório público.
+
 ## [1.1.0] - 2026-08-13
 
 ### Adicionado / Added

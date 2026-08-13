@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build-ui:
-    name: Build TUI (Windows)
+    name: Build GUI (Windows)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6

@@ -11,7 +11,7 @@
         -Lang pt|en      idioma da interface (padrao: pt)
         -NoLaunch        apenas instala, nao abre a interface
         -Cli             abre o menu PowerShell em vez da interface Rust
-        -Force           rebaixa tudo, ignorando o que ja existe
+        -Force           reinstala tudo, ignorando o cache local
 #>
 
 [CmdletBinding()]
@@ -43,9 +43,11 @@ $Texts = @{
         Folder    = 'Pasta de instalacao'
         DlEngine  = 'Baixando o motor (WinLean.ps1)...'
         DlUi      = 'Baixando a interface (winlean.exe)...'
+        DlRuntime = 'Preparando a interface grafica (Microsoft WebView2)...'
+        RuntimeFail = 'Nao foi possivel instalar o Microsoft WebView2 Runtime.'
         NoUi      = 'Nenhum binario de interface publicado ainda. Usando o menu do PowerShell.'
         UiFail    = 'Falha ao baixar a interface. Usando o menu do PowerShell.'
-        Cached    = 'Ja instalado (use -Force para rebaixar)'
+        Cached    = 'Interface atualizada'
         Shortcut  = 'Atalho criado no menu Iniciar.'
         Done      = 'Instalacao concluida.'
         Launch    = 'Abrindo a interface...'
@@ -58,9 +60,11 @@ $Texts = @{
         Folder    = 'Install folder'
         DlEngine  = 'Downloading the engine (WinLean.ps1)...'
         DlUi      = 'Downloading the interface (winlean.exe)...'
+        DlRuntime = 'Preparing the graphical interface (Microsoft WebView2)...'
+        RuntimeFail = 'Could not install the Microsoft WebView2 Runtime.'
         NoUi      = 'No interface binary published yet. Falling back to the PowerShell menu.'
         UiFail    = 'Interface download failed. Falling back to the PowerShell menu.'
-        Cached    = 'Already installed (use -Force to re-download)'
+        Cached    = 'Interface is up to date'
         Shortcut  = 'Start menu shortcut created.'
         Done      = 'Installation complete.'
         Launch    = 'Opening the interface...'
@@ -83,6 +87,43 @@ function Test-Admin {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     (New-Object Security.Principal.WindowsPrincipal $id).IsInRole(
         [Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
+function Test-WebView2Runtime {
+    $client = '{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}'
+    $paths = @(
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\$client",
+        "HKLM:\SOFTWARE\Microsoft\EdgeUpdate\Clients\$client",
+        "HKCU:\Software\Microsoft\EdgeUpdate\Clients\$client"
+    )
+    foreach ($path in $paths) {
+        $version = (Get-ItemProperty -Path $path -Name 'pv' -ErrorAction SilentlyContinue).pv
+        if ($version -and $version -ne '0.0.0.0') { return $true }
+    }
+    return $false
+}
+
+function Install-WebView2Runtime {
+    if (Test-WebView2Runtime) { return }
+
+    Say $L.DlRuntime
+    $bootstrapper = Join-Path $env:TEMP 'MicrosoftEdgeWebview2Setup.exe'
+    try {
+        Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' `
+            -OutFile $bootstrapper -UseBasicParsing
+        $process = Start-Process -FilePath $bootstrapper -ArgumentList '/silent /install' `
+            -Wait -PassThru
+        if (-not (Test-WebView2Runtime)) {
+            throw "WebView2 installer exit code: $($process.ExitCode)"
+        }
+        Say 'Microsoft WebView2 Runtime' 'Green' ' +'
+    } catch {
+        Say $L.RuntimeFail 'Red' ' x'
+        Say $_.Exception.Message 'DarkGray'
+        exit 1
+    } finally {
+        Remove-Item -LiteralPath $bootstrapper -Force -ErrorAction SilentlyContinue
+    }
 }
 
 <#
@@ -127,23 +168,23 @@ Write-Host ''
 New-Item -Path $InstallTo -ItemType Directory -Force | Out-Null
 Say "$($L.Folder): $InstallTo"
 
+if (-not $Cli) { Install-WebView2Runtime }
+
 # ------------------------------------------------------------------------------
 #  Motor / engine
 # ------------------------------------------------------------------------------
 
 $enginePath = Join-Path $InstallTo 'WinLean.ps1'
-if ($Force -or -not (Test-Path $enginePath)) {
-    Say $L.DlEngine
-    try {
-        Invoke-WebRequest -Uri "$RawBase/WinLean.ps1" -OutFile $enginePath -UseBasicParsing
-        Say 'WinLean.ps1' 'Green' ' +'
-    } catch {
-        Say $L.Blocked 'Red' ' x'
-        Say $_.Exception.Message 'DarkGray'
-        exit 1
-    }
-} else {
-    Say "WinLean.ps1 - $($L.Cached)" 'DarkGray'
+Say $L.DlEngine
+try {
+    # O instalador tambem funciona como atualizador. O motor vem da branch main
+    # em toda execucao para que uma instalacao anterior nunca fique desatualizada.
+    Invoke-WebRequest -Uri "$RawBase/WinLean.ps1" -OutFile $enginePath -UseBasicParsing
+    Say 'WinLean.ps1' 'Green' ' +'
+} catch {
+    Say $L.Blocked 'Red' ' x'
+    Say $_.Exception.Message 'DarkGray'
+    exit 1
 }
 
 # ------------------------------------------------------------------------------
@@ -151,19 +192,28 @@ if ($Force -or -not (Test-Path $enginePath)) {
 # ------------------------------------------------------------------------------
 
 $uiPath = Join-Path $InstallTo 'winlean.exe'
+$versionPath = Join-Path $InstallTo '.version'
 $hasUi  = Test-Path $uiPath
 
-if (-not $Cli -and ($Force -or -not $hasUi)) {
+if (-not $Cli) {
     Say $L.DlUi
     try {
         $headers = @{ 'User-Agent' = 'WinLean-Installer' }
         $release = Invoke-RestMethod -Uri $ApiLatest -Headers $headers -UseBasicParsing
         $asset   = $release.assets | Where-Object { $_.name -eq 'winlean.exe' } | Select-Object -First 1
+        $localVersion = if (Test-Path $versionPath) {
+            (Get-Content -LiteralPath $versionPath -Raw).Trim()
+        } else { '' }
 
         if ($asset) {
-            Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $uiPath -UseBasicParsing
+            if ($Force -or -not $hasUi -or $localVersion -ne $release.tag_name) {
+                Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $uiPath -UseBasicParsing
+                Set-Content -LiteralPath $versionPath -Value $release.tag_name -Encoding ASCII
+                Say "winlean.exe ($($release.tag_name))" 'Green' ' +'
+            } else {
+                Say "winlean.exe ($localVersion) - $($L.Cached)" 'DarkGray'
+            }
             $hasUi = $true
-            Say "winlean.exe ($($release.tag_name))" 'Green' ' +'
         } else {
             Say $L.NoUi 'Yellow' ' !'
         }
@@ -172,8 +222,6 @@ if (-not $Cli -and ($Force -or -not $hasUi)) {
         # exatamente as mesmas funcoes, entao a instalacao segue normalmente.
         Say $L.UiFail 'Yellow' ' !'
     }
-} elseif ($hasUi) {
-    Say "winlean.exe - $($L.Cached)" 'DarkGray'
 }
 
 # ------------------------------------------------------------------------------
@@ -186,9 +234,9 @@ try {
     $shell     = New-Object -ComObject WScript.Shell
     $s         = $shell.CreateShortcut($lnk)
 
-    if ($hasUi) {
+    if ($hasUi -and -not $Cli) {
         $s.TargetPath = $uiPath
-        $s.Arguments  = "--lang $Lang"
+        $s.Arguments  = "--lang $Lang --script `"$enginePath`""
     } else {
         $s.TargetPath = 'powershell.exe'
         $s.Arguments  = "-NoProfile -ExecutionPolicy Bypass -File `"$enginePath`" -Language $Lang"
@@ -203,7 +251,7 @@ try {
 Write-Host ''
 Say $L.Done 'Green' ' +'
 
-if ($hasUi) {
+if ($hasUi -and -not $Cli) {
     Say "$($L.Manual): $uiPath --lang $Lang" 'DarkGray'
 } else {
     Say "$($L.Manual): powershell -File `"$enginePath`" -Language $Lang" 'DarkGray'
@@ -220,8 +268,11 @@ Say $L.Launch 'Cyan' '=='
 Start-Sleep -Milliseconds 600
 
 if ($hasUi -and -not $Cli) {
-    # A TUI precisa de um console real: herdamos o atual em vez de abrir outro.
-    & $uiPath --lang $Lang --script $enginePath
+    # Abre o aplicativo Rust em processo proprio. O instalador termina e o
+    # usuario ve apenas a janela grafica; o PowerShell permanece como motor oculto.
+    $uiArguments = "--lang $Lang --script `"$enginePath`""
+    Start-Process -FilePath $uiPath -ArgumentList $uiArguments `
+        -WorkingDirectory $InstallTo -WindowStyle Normal
 } else {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $enginePath -Language $Lang
 }

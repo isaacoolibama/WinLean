@@ -11,7 +11,7 @@
 **Windows 10/11 debloat, privacy and performance — with a Rust interface and a real rollback.**
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?logo=powershell&logoColor=white)](https://learn.microsoft.com/powershell/)
-[![Rust](https://img.shields.io/badge/Rust-TUI-000000?logo=rust&logoColor=white)](ui/)
+[![Rust](https://img.shields.io/badge/Rust-GUI-000000?logo=rust&logoColor=white)](ui/)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white)](#compatibility)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -31,7 +31,7 @@ Open **Terminal as Administrator** (right-click Start → Terminal (Admin)) and 
 
 The installer downloads everything to `%LOCALAPPDATA%\WinLean`, creates a Start menu shortcut and opens the interface. Nothing is written to `Program Files` and nothing keeps running afterwards.
 
-Other flags: `-NoLaunch` (install only), `-Cli` (skip the Rust interface), `-Force` (re-download everything).
+Other flags: `-NoLaunch` (install only), `-Cli` (use the PowerShell menu), `-Force` (force a reinstall).
 
 ---
 
@@ -54,7 +54,7 @@ WinLean is built around three constraints:
 ```
   ┌────────────────────────┐        ┌──────────────────────────────┐
   │  winlean.exe (Rust)    │        │  WinLean.ps1 (engine)        │
-  │  ratatui + crossterm   │──exec──▶  all the mutation logic      │
+  │  HTML/CSS + WebView2   │──exec──▶  all the mutation logic      │
   │  builds the arguments  │◀─pipe──│  structured text output      │
   └────────────────────────┘        └──────────────┬───────────────┘
                                                    │
@@ -66,52 +66,19 @@ WinLean is built around three constraints:
 
 The interface **never changes the system**. It builds a command line and delegates to `WinLean.ps1`, which remains usable on its own. That keeps a single source of truth about what gets modified — and lets you audit the script without reading a line of Rust.
 
-Rust was chosen for weight: the binary is a few hundred KB, starts instantly, needs no installed runtime and leaves no resident process.
+The native window is controlled by Rust and rendered by Microsoft WebView2. The installer checks the runtime and installs it automatically when needed, including on Windows LTSC. PowerShell runs only as the hidden engine, and no process stays resident after the app closes.
 
 ---
 
 ## The interface
 
-```
- WinLean  v1.1.0  Windows debloat, privacy and performance          APPLY  [EN]
- ───────────────────────────────────────────────────────────────────────────────────
- ┌─ Modules (7/13) ──────────────────┐┌─ Details ───────────────────────────────────┐
- │ [x] Remove bloatware              ││ Services                                    │
- │ [x] Privacy and telemetry         ││                                             │
- │ [x] Copilot, Recall and AI        ││ 27 services retimed, each with its          │
- │ [x] Services                   ◀  ││ justification in the source.                │
- │ [x] Interface                     ││                                             │
- │ [x] Performance and memory        ││ Disabled is used only where there is no     │
- │ [x] Power plan                    ││ legitimate workstation scenario.            │
- │ [ ] Gaming and latency            ││                                             │
- │ [x] Disk cleanup                  ││ Never touched: Search, Spooler, Windows     │
- │ [ ]   Low-end mode (<= 8 GB)      ││ Update, Defender, Audio, Bluetooth.         │
- │ [ ]   Classic context menu        ││                                             │
- │ [ ]   Disable Fast Startup        ││ Power plan: Auto                            │
- │ [ ]   GPU scheduling (HAGS)       ││                                             │
- └───────────────────────────────────┘└─────────────────────────────────────────────┘
- ───────────────────────────────────────────────────────────────────────────────────
-  Up/Dn navigate   Space toggle   1-4 presets   P power   D dry run   S START
-```
+Version 1.2.0 opens like a regular Windows app: an HTML/CSS dashboard, preset
+cards, visual module selection, power plan, dry-run mode and a live execution log.
+Before any change, a confirmation summarizes exactly what will run.
 
-### Shortcuts
-
-| Key | Action |
-|---|---|
-| `↑` `↓` / `j` `k` | Navigate |
-| `Space` / `Enter` | Toggle |
-| `1` `2` `3` `4` | Minimal, Work, Gaming, Full presets |
-| `P` | Choose the power plan |
-| `D` | Toggle dry run |
-| `L` / `F2` | Switch Portuguese and English |
-| `A` | Select or clear everything |
-| `R` | Roll back the last run |
-| `S` / `F5` | Start |
-| `PgUp` `PgDn` | Scroll the log while running |
-| `?` / `F1` | Help |
-| `Q` / `Esc` | Quit |
-
-The language switches live and is passed on to the engine via `-Language`.
+The **Undo last run** button replays the latest journal. Portuguese and English
+can be switched at the top of the window, and the choice is passed to the engine
+through `-Language`.
 
 ---
 
@@ -128,7 +95,7 @@ The language switches live and is passed on to the engine via `-Language`.
 
 ## Power plans
 
-Selectable with `P` in the interface or with `-PowerPlan` on the command line.
+Selectable in the interface's **Power plan** list or with `-PowerPlan` on the command line.
 
 | Option | Description |
 |---|---|
@@ -222,7 +189,7 @@ Prefetch is intentionally left alone.
 
 Every run writes `C:\ProgramData\WinLean\backups\journal-<timestamp>.json` containing, for each change, the previous value **and whether the key existed at all** — so the revert removes what WinLean created instead of writing a guessed default back.
 
-From the interface: press `R`. From the command line:
+From the interface: click **Undo last run**. From the command line:
 
 ```powershell
 & "$env:LOCALAPPDATA\WinLean\WinLean.ps1" -Revert
@@ -280,7 +247,9 @@ cargo build --release
 # binary at ui/target/release/winlean.exe
 ```
 
-Requires Rust 1.74+. The only dependency is `ratatui` (which re-exports `crossterm` at a matching version, avoiding a version clash between the two crates).
+Requires Rust 1.88+. On Windows, the app uses `winit` + `wry` and renders the
+embedded HTML/CSS with Microsoft WebView2. On other systems, the terminal
+interface remains available for development.
 
 ---
 

@@ -11,7 +11,7 @@
 **Debloat, privacidade e performance para Windows 10/11 — com interface em Rust e rollback de verdade.**
 
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-5391FE?logo=powershell&logoColor=white)](https://learn.microsoft.com/powershell/)
-[![Rust](https://img.shields.io/badge/Rust-TUI-000000?logo=rust&logoColor=white)](ui/)
+[![Rust](https://img.shields.io/badge/Rust-GUI-000000?logo=rust&logoColor=white)](ui/)
 [![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D6?logo=windows&logoColor=white)](#compatibilidade)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -37,7 +37,7 @@ Em inglês:
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/isaacoolibama/WinLean/main/install.ps1))) -Lang en
 ```
 
-Outras opções: `-NoLaunch` (só instala), `-Cli` (pula a interface Rust), `-Force` (rebaixa tudo).
+Outras opções: `-NoLaunch` (só instala), `-Cli` (usa o menu PowerShell), `-Force` (força uma reinstalação).
 
 ---
 
@@ -60,7 +60,7 @@ O WinLean foi construído sobre três restrições:
 ```
   ┌────────────────────────┐        ┌──────────────────────────────┐
   │  winlean.exe (Rust)    │        │  WinLean.ps1 (motor)         │
-  │  ratatui + crossterm   │──exec──▶  toda a lógica de alteração  │
+  │  HTML/CSS + WebView2   │──exec──▶  toda a lógica de alteração  │
   │  monta a linha de cmd  │◀─pipe──│  saída em texto estruturado  │
   └────────────────────────┘        └──────────────┬───────────────┘
                                                    │
@@ -72,52 +72,20 @@ O WinLean foi construído sobre três restrições:
 
 A interface **não altera o sistema**. Ela monta a linha de comando e delega ao `WinLean.ps1`, que continua utilizável sozinho. Isso mantém uma única fonte de verdade sobre o que é modificado na máquina — e permite auditar o script sem ler uma linha de Rust.
 
-A escolha do Rust foi por peso: o binário fica em poucas centenas de KB, abre instantaneamente, não exige runtime instalado e não deixa processo residente.
+A janela nativa é controlada por Rust e renderizada pelo Microsoft WebView2. O instalador verifica o runtime e o instala automaticamente quando necessário, inclusive no Windows LTSC. O PowerShell executa apenas como motor oculto e nenhum processo fica residente depois que o aplicativo é fechado.
 
 ---
 
 ## A interface
 
-```
- WinLean  v1.1.0  Debloat, privacidade e performance para Windows   APLICAR  [PT-BR]
- ───────────────────────────────────────────────────────────────────────────────────
- ┌─ Modulos (7/13) ──────────────────┐┌─ Detalhes ──────────────────────────────────┐
- │ [x] Remover bloatware             ││ Servicos                                    │
- │ [x] Privacidade e telemetria      ││                                             │
- │ [x] Copilot, Recall e IA          ││ 27 servicos reajustados, cada um com        │
- │ [x] Servicos                   ◀  ││ justificativa no codigo-fonte.              │
- │ [x] Interface                     ││                                             │
- │ [x] Performance e memoria         ││ Disabled so onde nao existe cenario         │
- │ [x] Plano de energia              ││ legitimo em estacao de trabalho.            │
- │ [ ] Jogos e latencia              ││                                             │
- │ [x] Limpeza de disco              ││ Nunca tocados: Search, Spooler, Windows     │
- │ [ ]   Modo low-end (<= 8 GB)      ││ Update, Defender, Audio, Bluetooth.         │
- │ [ ]   Menu de contexto classico   ││                                             │
- │ [ ]   Desativar Fast Startup      ││ Plano de energia: Automatico                │
- │ [ ]   Agendamento de GPU (HAGS)   ││                                             │
- └───────────────────────────────────┘└─────────────────────────────────────────────┘
- ───────────────────────────────────────────────────────────────────────────────────
-  Up/Dn navegar   Space marcar   1-4 presets   P energia   D simular   S INICIAR
-```
+A v1.2.0 abre como um aplicativo gráfico normal do Windows: painel em HTML/CSS,
+presets em cartões, seleção visual dos módulos, plano de energia, modo de simulação
+e log em tempo real. Antes de qualquer alteração, uma confirmação resume exatamente
+o que será executado.
 
-### Atalhos
-
-| Tecla | Ação |
-|---|---|
-| `↑` `↓` / `j` `k` | Navegar |
-| `Espaço` / `Enter` | Marcar ou desmarcar |
-| `1` `2` `3` `4` | Presets Mínimo, Trabalho, Jogos, Tudo |
-| `P` | Escolher o plano de energia |
-| `D` | Alternar simulação (dry run) |
-| `L` / `F2` | Alternar português e inglês |
-| `A` | Marcar ou desmarcar tudo |
-| `R` | Desfazer a última execução |
-| `S` / `F5` | Iniciar |
-| `PgUp` `PgDn` | Rolar o log durante a execução |
-| `?` / `F1` | Ajuda |
-| `Q` / `Esc` | Sair |
-
-O idioma muda em tempo real, inclusive no meio da execução seguinte — a escolha é repassada ao motor via `-Language`.
+O botão **Desfazer última execução** usa o journal mais recente. Português e inglês
+podem ser alternados no topo da janela, e a escolha é repassada ao motor via
+`-Language`.
 
 ---
 
@@ -134,7 +102,7 @@ O idioma muda em tempo real, inclusive no meio da execução seguinte — a esco
 
 ## Planos de energia
 
-Selecionáveis com `P` na interface ou com `-PowerPlan` na linha de comando.
+Selecionáveis na lista **Plano de energia** da interface ou com `-PowerPlan` na linha de comando.
 
 | Opção | Descrição |
 |---|---|
@@ -228,7 +196,7 @@ O Prefetch é deixado intacto de propósito.
 
 Cada execução grava `C:\ProgramData\WinLean\backups\journal-<timestamp>.json` contendo, para cada mudança, o valor anterior **e se a chave sequer existia** — assim o revert remove o que o WinLean criou em vez de escrever um padrão chutado.
 
-Pela interface: tecla `R`. Pela linha de comando:
+Pela interface: botão **Desfazer última execução**. Pela linha de comando:
 
 ```powershell
 & "$env:LOCALAPPDATA\WinLean\WinLean.ps1" -Revert
@@ -286,7 +254,9 @@ cargo build --release
 # binário em ui/target/release/winlean.exe
 ```
 
-Requer Rust 1.74+. A única dependência é o `ratatui` (que já reexporta o `crossterm` na versão correta, evitando conflito entre os dois crates).
+Requer Rust 1.88+. No Windows, a janela usa `winit` + `wry` e renderiza o HTML/CSS
+embutido com o Microsoft WebView2. Em outros sistemas, a interface de terminal
+continua disponível para desenvolvimento.
 
 ---
 

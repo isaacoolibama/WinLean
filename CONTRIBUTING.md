@@ -15,7 +15,7 @@
    de fora. Desativar Memory Compression, apagar o Prefetch e "limpar a RAM" caem
    todos nesse balde.
 5. **Traduza os dois lados.** Uma string nova em PT sem o par em EN (ou vice-versa)
-   não passa na revisão. Na interface Rust, edite `ui/src/i18n.rs`.
+   não passa na revisão. Na interface gráfica, edite `ui/assets/index.html`.
 
 ## Enviando uma mudança
 
@@ -23,7 +23,8 @@
 - Informe em qual build testou (`winver`).
 - Uma mudança lógica por pull request.
 - O motor continua sendo um único arquivo, sem dependências externas.
-- Na interface, mantenha a árvore de dependências enxuta. Hoje é só `ratatui`.
+- Na interface, mantenha a árvore de dependências enxuta. A GUI do Windows usa
+  `winit`, `wry` e o WebView2 já presente ou instalado pelo instalador.
 
 ## Reportando um problema
 
@@ -44,7 +45,7 @@ Abra uma issue com:
    no legitimate workstation scenario.
 4. **No folklore.** If you cannot point to a measurable effect, leave it out.
 5. **Translate both sides.** A new PT string without its EN pair (or vice versa)
-   does not pass review. For the Rust interface, edit `ui/src/i18n.rs`.
+   does not pass review. For the graphical interface, edit `ui/assets/index.html`.
 
 Test on a VM with a dry run first, then for real, then with `-Revert`. Note the
 build you tested on, one logical change per pull request.

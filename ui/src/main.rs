@@ -1,5 +1,7 @@
-//! WinLean - interface de terminal.
-//! WinLean - terminal user interface.
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+
+//! WinLean - interface grafica no Windows e TUI de desenvolvimento nos demais SOs.
+//! WinLean - graphical Windows interface and development TUI on other platforms.
 //!
 //! A UI nao altera o sistema. Ela monta a linha de comando e delega tudo ao
 //! WinLean.ps1, que continua sendo utilizavel sozinho. Isso mantem uma unica
@@ -9,13 +11,21 @@
 //! everything to WinLean.ps1, which remains usable on its own. That keeps a single
 //! source of truth about what gets changed on the machine.
 
+#[cfg(not(target_os = "windows"))]
 mod app;
+#[cfg(not(target_os = "windows"))]
 mod i18n;
 mod runner;
+#[cfg(not(target_os = "windows"))]
 mod ui;
+#[cfg(target_os = "windows")]
+mod webapp;
 
+#[cfg(not(target_os = "windows"))]
 use app::{App, Screen};
+#[cfg(not(target_os = "windows"))]
 use i18n::Lang;
+#[cfg(not(target_os = "windows"))]
 use ratatui::crossterm::{
     event::{
         self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
@@ -23,13 +33,28 @@ use ratatui::crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+#[cfg(not(target_os = "windows"))]
 use ratatui::{backend::CrosstermBackend, Terminal};
+#[cfg(not(target_os = "windows"))]
 use std::io::{self, Stdout};
+#[cfg(not(target_os = "windows"))]
 use std::path::PathBuf;
+#[cfg(not(target_os = "windows"))]
 use std::time::Duration;
 
+#[cfg(not(target_os = "windows"))]
 const TICK: Duration = Duration::from_millis(80);
 
+#[cfg(target_os = "windows")]
+fn main() {
+    if let Err(error) = webapp::run() {
+        runner::show_error_dialog(&format!(
+            "Nao foi possivel abrir o WinLean.\n\nCould not open WinLean.\n\n{error}"
+        ));
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
 fn main() -> io::Result<()> {
     let (lang, script) = parse_args();
 
@@ -60,6 +85,7 @@ fn main() -> io::Result<()> {
 // argumentos / arguments
 // -----------------------------------------------------------------------------
 
+#[cfg(not(target_os = "windows"))]
 fn parse_args() -> (Lang, Option<PathBuf>) {
     let mut lang = Lang::Pt; // padrao: portugues / default: Portuguese
     let mut script = None;
@@ -97,6 +123,7 @@ fn parse_args() -> (Lang, Option<PathBuf>) {
 
 /// Procura o WinLean.ps1 ao lado do executavel, no diretorio atual e na pasta de
 /// instalacao padrao. Cobre tanto o uso via instalador quanto `cargo run`.
+#[cfg(not(target_os = "windows"))]
 fn locate_script() -> Option<PathBuf> {
     let mut candidates: Vec<PathBuf> = Vec::new();
 
@@ -122,6 +149,7 @@ fn locate_script() -> Option<PathBuf> {
 // terminal
 // -----------------------------------------------------------------------------
 
+#[cfg(not(target_os = "windows"))]
 fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<Stdout>>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -129,6 +157,7 @@ fn setup_terminal() -> io::Result<Terminal<CrosstermBackend<Stdout>>> {
     Terminal::new(CrosstermBackend::new(stdout))
 }
 
+#[cfg(not(target_os = "windows"))]
 fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Result<()> {
     disable_raw_mode()?;
     execute!(
@@ -143,6 +172,7 @@ fn restore_terminal(terminal: &mut Terminal<CrosstermBackend<Stdout>>) -> io::Re
 // loop principal / main loop
 // -----------------------------------------------------------------------------
 
+#[cfg(not(target_os = "windows"))]
 fn run_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) -> io::Result<()> {
     loop {
         // Altura util do painel de log, usada pelo autoscroll.
@@ -174,6 +204,7 @@ fn run_loop(terminal: &mut Terminal<CrosstermBackend<Stdout>>, app: &mut App) ->
     }
 }
 
+#[cfg(not(target_os = "windows"))]
 fn handle_key(app: &mut App, code: KeyCode, viewport: u16) {
     app.last_error = None;
 
