@@ -29,7 +29,10 @@ Abra o **Terminal como Administrador** (botão direito no Iniciar → Terminal (
 irm https://raw.githubusercontent.com/isaacoolibama/WinLean/main/install.ps1 | iex
 ```
 
-O instalador baixa tudo para `%LOCALAPPDATA%\WinLean`, cria um atalho no menu Iniciar e abre a interface. Nada é escrito em `Program Files` e nada roda em segundo plano depois.
+O instalador baixa tudo para `%LOCALAPPDATA%\WinLean`, cria um atalho temporário no
+menu Iniciar e abre a interface. Ao fechar o aplicativo, a instalação, o atalho e
+os temporários do WinLean são removidos automaticamente. Logs e journals de
+rollback em `C:\ProgramData\WinLean` são preservados.
 
 Em inglês:
 
@@ -78,10 +81,11 @@ A janela nativa é controlada por Rust e renderizada pelo Microsoft WebView2. O 
 
 ## A interface
 
-A v1.2.0 abre como um aplicativo gráfico normal do Windows: painel em HTML/CSS,
-presets em cartões, seleção visual dos módulos, plano de energia, modo de simulação
-e log em tempo real. Antes de qualquer alteração, uma confirmação resume exatamente
-o que será executado.
+A v1.3.0 abre maximizada como um aplicativo gráfico normal do Windows: painel
+HTML/CSS com cores sólidas, presets em cartões, seleção visual dos módulos, plano
+de energia e modo de simulação. Antes de qualquer alteração, uma confirmação
+resume exatamente o que será executado. Durante a execução, o progresso e o log
+ficam em um modal central — a página não pula nem exige rolagem.
 
 O botão **Desfazer última execução** usa o journal mais recente. Português e inglês
 podem ser alternados no topo da janela, e a escolha é repassada ao motor via
@@ -277,7 +281,7 @@ O WinLean detecta RAM, SSD vs HDD, notebook vs desktop e ingresso em domínio, e
 ## Arquivos
 
 ```
-%LOCALAPPDATA%\WinLean\                        instalação
+%LOCALAPPDATA%\WinLean\                        instalação temporária da interface
 C:\ProgramData\WinLean\logs\winlean-*.log      trace completo
 C:\ProgramData\WinLean\backups\journal-*.json  dados de rollback
 ```

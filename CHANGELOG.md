@@ -3,6 +3,19 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [1.3.0] - 2026-08-13
+
+### Adicionado / Added
+- Ícone próprio do WinLean em SVG, PNG e ICO, embutido nos recursos do executável
+  e usado pelo atalho do menu Iniciar.
+- Limpeza pós-encerramento restrita à instalação, ao atalho e aos arquivos
+  temporários do WinLean. Logs e journals de rollback são preservados.
+
+### Alterado / Changed
+- A janela agora sempre inicia maximizada.
+- O progresso e o log de execução passaram para um modal central bloqueante.
+- A interface foi redesenhada com cores e superfícies sólidas, sem degradês.
+
 ## [1.2.0] - 2026-08-13
 
 ### Adicionado / Added

@@ -96,7 +96,7 @@ try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 #  GLOBAIS / GLOBALS
 # ==============================================================================
 
-$script:Version     = '1.2.0'
+$script:Version     = '1.3.0'
 $script:Lang        = $Language
 $script:RootDir     = Join-Path $env:ProgramData 'WinLean'
 $script:BackupDir   = Join-Path $script:RootDir 'backups'

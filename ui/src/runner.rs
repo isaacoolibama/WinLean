@@ -8,7 +8,7 @@
 //! the render loop never blocks on I/O.
 
 use std::io::{BufRead, BufReader, Read};
-#[cfg(target_os = "windows")]
+#[cfg(any(target_os = "windows", test))]
 use std::path::Path;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -239,6 +239,80 @@ pub fn show_error_dialog(message: &str) {
     let _ = command.status();
 }
 
+/// Agenda a remocao depois que o processo grafico encerrar. Apenas a pasta de
+/// instalacao conhecida do WinLean, o atalho e temporarios com prefixo WinLean
+/// sao removidos; logs e journals em ProgramData permanecem para rollback.
+#[cfg(target_os = "windows")]
+pub fn schedule_cleanup() -> std::io::Result<()> {
+    let executable = std::env::current_exe()?;
+    let temp_dir = std::env::temp_dir();
+    let local_app_data = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+    let (remove_target, is_installed) = cleanup_target(&executable, local_app_data.as_deref());
+
+    let mut removals = format!(
+        "Remove-Item -LiteralPath '{}' -Recurse -Force -ErrorAction SilentlyContinue; ",
+        escape_powershell(&remove_target.to_string_lossy())
+    );
+    if is_installed {
+        if let Some(app_data) = std::env::var_os("APPDATA") {
+            let shortcut = PathBuf::from(app_data)
+                .join("Microsoft")
+                .join("Windows")
+                .join("Start Menu")
+                .join("Programs")
+                .join("WinLean.lnk");
+            removals.push_str(&format!(
+                "Remove-Item -LiteralPath '{}' -Force -ErrorAction SilentlyContinue; ",
+                escape_powershell(&shortcut.to_string_lossy())
+            ));
+        }
+    }
+
+    let script = format!(
+        "$ErrorActionPreference='SilentlyContinue'; \
+         Wait-Process -Id {} -ErrorAction SilentlyContinue; \
+         Start-Sleep -Milliseconds 250; \
+         {}\
+         Get-ChildItem -LiteralPath '{}' -Force -Filter 'WinLean-*' -ErrorAction SilentlyContinue | \
+         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue",
+        std::process::id(),
+        removals,
+        escape_powershell(&temp_dir.to_string_lossy())
+    );
+
+    let mut command = Command::new("powershell.exe");
+    command
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .current_dir(&temp_dir)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    hide_console(&mut command);
+    command.spawn().map(|_| ())
+}
+
+#[cfg(any(target_os = "windows", test))]
+fn same_windows_path(left: &Path, right: &Path) -> bool {
+    let normalize = |path: &Path| {
+        path.canonicalize()
+            .unwrap_or_else(|_| path.to_path_buf())
+            .to_string_lossy()
+            .trim_end_matches(['\\', '/'])
+            .to_string()
+    };
+    normalize(left).eq_ignore_ascii_case(&normalize(right))
+}
+
+#[cfg(any(target_os = "windows", test))]
+fn cleanup_target(executable: &Path, local_app_data: Option<&Path>) -> (PathBuf, bool) {
+    let executable_dir = executable.parent().unwrap_or_else(|| Path::new("."));
+    let installed_root = local_app_data.map(|path| path.join("WinLean"));
+    match installed_root {
+        Some(root) if same_windows_path(executable_dir, &root) => (root, true),
+        _ => (executable.to_path_buf(), false),
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn escape_powershell(value: &str) -> String {
     value.replace('\'', "''")
@@ -253,4 +327,29 @@ fn hide_console(command: &mut Command) {
     }
     #[cfg(not(target_os = "windows"))]
     let _ = command;
+}
+
+#[cfg(test)]
+mod cleanup_tests {
+    use super::cleanup_target;
+    use std::path::Path;
+
+    #[test]
+    fn removes_only_known_install_root_for_installed_copy() {
+        let (target, installed) = cleanup_target(
+            Path::new("C:/Users/Test/AppData/Local/WinLean/winlean.exe"),
+            Some(Path::new("c:/users/test/appdata/local")),
+        );
+        assert!(installed);
+        assert_eq!(target, Path::new("c:/users/test/appdata/local/WinLean"));
+    }
+
+    #[test]
+    fn removes_only_executable_for_portable_copy() {
+        let executable = Path::new("D:/Downloads/WinLean/winlean.exe");
+        let (target, installed) =
+            cleanup_target(executable, Some(Path::new("C:/Users/Test/AppData/Local")));
+        assert!(!installed);
+        assert_eq!(target, executable);
+    }
 }

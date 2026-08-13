@@ -29,7 +29,10 @@ Open **Terminal as Administrator** (right-click Start → Terminal (Admin)) and 
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/isaacoolibama/WinLean/main/install.ps1))) -Lang en
 ```
 
-The installer downloads everything to `%LOCALAPPDATA%\WinLean`, creates a Start menu shortcut and opens the interface. Nothing is written to `Program Files` and nothing keeps running afterwards.
+The installer downloads everything to `%LOCALAPPDATA%\WinLean`, creates a temporary
+Start menu shortcut and opens the interface. When the app closes, the installation,
+shortcut and WinLean temporary files are removed automatically. Rollback logs and
+journals under `C:\ProgramData\WinLean` are preserved.
 
 Other flags: `-NoLaunch` (install only), `-Cli` (use the PowerShell menu), `-Force` (force a reinstall).
 
@@ -72,9 +75,10 @@ The native window is controlled by Rust and rendered by Microsoft WebView2. The 
 
 ## The interface
 
-Version 1.2.0 opens like a regular Windows app: an HTML/CSS dashboard, preset
-cards, visual module selection, power plan, dry-run mode and a live execution log.
-Before any change, a confirmation summarizes exactly what will run.
+Version 1.3.0 opens maximized like a regular Windows app: a solid-color HTML/CSS
+dashboard, preset cards, visual module selection, power plan and dry-run mode.
+Before any change, a confirmation summarizes exactly what will run. During a run,
+progress and live logs stay in a centered modal, without moving or scrolling the page.
 
 The **Undo last run** button replays the latest journal. Portuguese and English
 can be switched at the top of the window, and the choice is passed to the engine
@@ -270,7 +274,7 @@ WinLean detects RAM, SSD vs HDD, laptop vs desktop and domain membership, and ad
 ## Files
 
 ```
-%LOCALAPPDATA%\WinLean\                        installation
+%LOCALAPPDATA%\WinLean\                        temporary interface installation
 C:\ProgramData\WinLean\logs\winlean-*.log      full trace
 C:\ProgramData\WinLean\backups\journal-*.json  rollback data
 ```

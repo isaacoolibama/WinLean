@@ -7,18 +7,19 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #07111f;
-      --panel: rgba(15, 28, 47, .86);
-      --panel-2: rgba(21, 38, 62, .78);
-      --line: rgba(148, 174, 211, .15);
-      --text: #f4f7fb;
-      --muted: #93a8c5;
-      --cyan: #36d5f5;
-      --blue: #4388ff;
-      --green: #52e0a4;
-      --yellow: #ffc857;
-      --red: #ff6f83;
-      --shadow: 0 22px 70px rgba(0, 0, 0, .32);
+      --bg: #0a111b;
+      --panel: #111c2a;
+      --panel-2: #162335;
+      --panel-hover: #1b2b40;
+      --line: #2a3a50;
+      --text: #eef3f8;
+      --muted: #91a2b7;
+      --cyan: #2aa7c9;
+      --blue: #4f7fc7;
+      --green: #42b883;
+      --yellow: #d5a642;
+      --red: #d85c6f;
+      --shadow: 0 12px 32px rgba(0, 0, 0, .22);
       font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
     }
 
@@ -26,14 +27,8 @@
 
     html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
 
-    body {
-      min-height: 100vh;
-      background:
-        radial-gradient(900px 500px at 8% -5%, rgba(54, 213, 245, .12), transparent 62%),
-        radial-gradient(800px 520px at 100% 0%, rgba(67, 136, 255, .16), transparent 60%),
-        linear-gradient(145deg, #07111f 0%, #091728 52%, #07111f 100%);
-      overflow-x: hidden;
-    }
+    body { min-height: 100vh; background: var(--bg); overflow-x: hidden; }
+    body.modal-open { overflow: hidden; }
 
     button, select { font: inherit; }
     button { color: inherit; }
@@ -45,8 +40,7 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--line);
-      background: rgba(5, 14, 26, .76);
-      backdrop-filter: blur(20px);
+      background: #0d1724;
       position: sticky;
       top: 0;
       z-index: 20;
@@ -57,8 +51,7 @@
       width: 39px; height: 39px; border-radius: 12px;
       display: grid; place-items: center;
       color: #06121d; font-weight: 900; font-size: 19px;
-      background: linear-gradient(135deg, var(--cyan), var(--green));
-      box-shadow: 0 8px 25px rgba(54, 213, 245, .22);
+      background: var(--cyan);
     }
     .brand-name { font-size: 20px; font-weight: 750; letter-spacing: -.4px; }
     .version { color: var(--muted); font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 99px; }
@@ -67,8 +60,8 @@
     .admin-badge {
       display: flex; align-items: center; gap: 7px;
       padding: 8px 11px; border-radius: 10px;
-      color: var(--green); background: rgba(82, 224, 164, .08);
-      border: 1px solid rgba(82, 224, 164, .18); font-size: 12px; font-weight: 650;
+      color: #7bd0aa; background: #10271f;
+      border: 1px solid #245a45; font-size: 12px; font-weight: 650;
     }
     .lang-switch { display: flex; padding: 3px; background: #0b1728; border: 1px solid var(--line); border-radius: 10px; }
     .lang-switch button { border: 0; background: transparent; color: var(--muted); padding: 6px 10px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 700; }
@@ -80,38 +73,38 @@
     .eyebrow { color: var(--cyan); text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; font-weight: 800; margin-bottom: 8px; }
     h1 { font-size: clamp(27px, 3vw, 42px); letter-spacing: -1.4px; margin: 0 0 9px; line-height: 1.06; }
     .hero p { color: var(--muted); margin: 0; max-width: 730px; font-size: 14px; line-height: 1.6; }
-    .safety { min-width: 210px; padding: 13px 15px; border: 1px solid rgba(82, 224, 164, .17); background: rgba(82, 224, 164, .06); border-radius: 14px; }
+    .safety { min-width: 210px; padding: 13px 15px; border: 1px solid #285744; background: #10251e; border-radius: 10px; }
     .safety strong { color: var(--green); font-size: 13px; display: block; margin-bottom: 3px; }
     .safety span { color: var(--muted); font-size: 11px; }
 
     .preset-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; overflow-x: auto; padding-bottom: 2px; }
     .preset-label { color: var(--muted); font-size: 12px; font-weight: 650; margin-right: 3px; white-space: nowrap; }
     .preset {
-      border: 1px solid var(--line); background: rgba(15, 29, 48, .72); color: #bfd0e7;
-      border-radius: 11px; padding: 9px 15px; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap;
+      border: 1px solid var(--line); background: #111c2a; color: #bfd0e7;
+      border-radius: 8px; padding: 9px 15px; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap;
       transition: .18s ease;
     }
-    .preset:hover { border-color: rgba(54, 213, 245, .4); color: white; transform: translateY(-1px); }
-    .preset.active { color: #07111f; background: linear-gradient(135deg, var(--cyan), #77e3ed); border-color: transparent; }
+    .preset:hover { border-color: #45617f; background: #17263a; color: white; }
+    .preset.active { color: #07111f; background: var(--cyan); border-color: var(--cyan); }
     .locked { pointer-events: none; opacity: .62; }
 
     .layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 18px; align-items: start; }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
     .panel-head { padding: 18px 20px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; }
     .panel-title { font-size: 14px; font-weight: 750; }
     .panel-sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
-    .count { color: var(--cyan); background: rgba(54, 213, 245, .09); border: 1px solid rgba(54, 213, 245, .16); padding: 5px 9px; border-radius: 99px; font-size: 11px; font-weight: 750; }
+    .count { color: #72c7dd; background: #102836; border: 1px solid #24546a; padding: 5px 9px; border-radius: 6px; font-size: 11px; font-weight: 750; }
 
-    .modules { padding: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .modules { padding: 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
     .module {
-      min-height: 108px; padding: 14px; border: 1px solid var(--line); border-radius: 14px;
+      min-height: 108px; padding: 14px; border: 1px solid var(--line); border-radius: 9px;
       background: var(--panel-2); cursor: pointer; position: relative; transition: .18s ease; user-select: none;
     }
-    .module:hover { transform: translateY(-2px); border-color: rgba(148, 174, 211, .32); background: rgba(27, 47, 75, .88); }
-    .module.selected { border-color: rgba(54, 213, 245, .46); background: linear-gradient(145deg, rgba(36, 77, 111, .72), rgba(17, 37, 61, .9)); box-shadow: inset 0 0 0 1px rgba(54, 213, 245, .08); }
+    .module:hover { border-color: #49627f; background: var(--panel-hover); }
+    .module.selected { border-color: #2f94b2; background: #17364a; box-shadow: inset 3px 0 0 var(--cyan); }
     .module.advanced::after { content: "PRO"; position: absolute; right: 12px; bottom: 10px; color: #6f87a7; font-size: 8px; font-weight: 800; letter-spacing: 1px; }
     .module-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .module-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: rgba(107, 137, 178, .12); font-size: 15px; }
+    .module-icon { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px; background: #203149; font-size: 15px; }
     .check { width: 20px; height: 20px; border-radius: 6px; border: 1px solid #4e6687; display: grid; place-items: center; color: #07111f; font-size: 12px; font-weight: 900; }
     .selected .check { border-color: transparent; background: var(--cyan); }
     .module-name { font-size: 12px; font-weight: 750; margin-bottom: 4px; }
@@ -124,7 +117,7 @@
     select { width: 100%; color: white; background: #0b192b; border: 1px solid var(--line); border-radius: 11px; padding: 11px 12px; outline: none; cursor: pointer; }
     select:focus { border-color: var(--cyan); }
 
-    .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 13px; border-radius: 12px; background: rgba(8, 20, 35, .56); border: 1px solid var(--line); }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 13px; border-radius: 9px; background: #0d1826; border: 1px solid var(--line); }
     .toggle-copy strong { display: block; font-size: 11px; margin-bottom: 3px; }
     .toggle-copy span { display: block; color: var(--muted); font-size: 9px; line-height: 1.35; }
     .switch { width: 42px; height: 24px; border: 0; padding: 3px; border-radius: 99px; background: #31445f; cursor: pointer; flex: 0 0 auto; transition: .2s; }
@@ -139,23 +132,30 @@
     .primary, .secondary, .danger {
       width: 100%; border-radius: 12px; padding: 12px 14px; cursor: pointer; font-weight: 780; font-size: 12px; transition: .18s;
     }
-    .primary { border: 0; color: #06121d; background: linear-gradient(135deg, var(--cyan), var(--green)); box-shadow: 0 10px 28px rgba(54, 213, 245, .17); }
-    .primary:hover { transform: translateY(-1px); filter: brightness(1.06); }
-    .secondary { margin-top: 9px; border: 1px solid var(--line); color: #c6d3e5; background: rgba(9, 22, 38, .6); }
-    .secondary:hover { border-color: rgba(148, 174, 211, .35); color: white; }
+    .primary { border: 1px solid var(--cyan); color: #07111f; background: var(--cyan); }
+    .primary:hover { background: #43b2ce; border-color: #43b2ce; }
+    .secondary { margin-top: 9px; border: 1px solid var(--line); color: #c6d3e5; background: #0d1826; }
+    .secondary:hover { border-color: #526b88; background: #162437; color: white; }
     button:disabled { opacity: .46; cursor: not-allowed; transform: none !important; }
 
-    .log-panel { display: none; margin-top: 18px; }
-    .log-panel.open { display: block; animation: rise .25s ease; }
-    .log-head { padding: 15px 19px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+    .run-backdrop { position: fixed; inset: 0; z-index: 65; display: none; align-items: center; justify-content: center; padding: 24px; background: rgba(3, 8, 14, .84); }
+    .run-backdrop.open { display: flex; }
+    .run-dialog { width: min(820px, 100%); max-height: calc(100vh - 48px); display: flex; flex-direction: column; background: #101a28; border: 1px solid #354961; border-radius: 12px; box-shadow: 0 24px 70px rgba(0, 0, 0, .48); overflow: hidden; animation: rise .18s ease; }
+    .log-head { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); background: #142132; }
     .run-state { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 750; }
-    .spinner { width: 16px; height: 16px; border: 2px solid rgba(54, 213, 245, .18); border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
-    .spinner.done { animation: none; border-color: var(--green); background: radial-gradient(circle, var(--green) 0 42%, transparent 46%); }
+    .spinner { width: 20px; height: 20px; border: 2px solid #355066; border-top-color: var(--cyan); border-radius: 50%; animation: spin .8s linear infinite; }
+    .spinner.done { animation: none; border-color: var(--green); background: var(--green); }
     .spinner.failed { animation: none; border-color: var(--red); }
     .log-actions { display: flex; gap: 8px; }
-    .mini { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 6px 9px; font-size: 10px; cursor: pointer; }
-    .log { height: 250px; overflow: auto; padding: 15px 18px; background: rgba(3, 10, 18, .55); font: 11px/1.55 "Cascadia Mono", Consolas, monospace; }
-    .log-panel.collapsed .log { display: none; }
+    .mini { border: 1px solid var(--line); background: #0d1826; color: var(--muted); border-radius: 7px; padding: 7px 10px; font-size: 10px; cursor: pointer; }
+    .run-progress { height: 3px; background: #1b2a3d; overflow: hidden; }
+    .run-progress::after { content: ""; display: block; width: 28%; height: 100%; background: var(--cyan); animation: progress 1.35s ease-in-out infinite; }
+    .run-progress.done::after { width: 100%; animation: none; background: var(--green); }
+    .run-progress.failed::after { width: 100%; animation: none; background: var(--red); }
+    .log { height: min(46vh, 430px); min-height: 220px; overflow: auto; padding: 18px 20px; background: #09121e; font: 11px/1.6 "Cascadia Mono", Consolas, monospace; }
+    .run-footer { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-top: 1px solid var(--line); background: #101a28; }
+    .run-hint { color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .run-close { width: auto; min-width: 110px; padding: 9px 18px; }
     .line { white-space: pre-wrap; color: #b9c7d8; }
     .line.section { color: var(--cyan); font-weight: 800; margin-top: 7px; }
     .line.ok { color: var(--green); }
@@ -163,10 +163,10 @@
     .line.error { color: var(--red); }
     .line.dry { color: #b591ff; }
 
-    .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(1, 7, 14, .72); backdrop-filter: blur(8px); }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(3, 8, 14, .84); }
     .modal-backdrop.open { display: flex; }
-    .modal { width: min(470px, 100%); padding: 23px; border-radius: 20px; background: #101e31; border: 1px solid rgba(148, 174, 211, .2); box-shadow: 0 28px 90px rgba(0, 0, 0, .5); animation: rise .2s ease; }
-    .modal-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: rgba(54, 213, 245, .1); color: var(--cyan); font-size: 20px; }
+    .modal { width: min(470px, 100%); padding: 23px; border-radius: 12px; background: #101e31; border: 1px solid #354961; box-shadow: 0 24px 70px rgba(0, 0, 0, .48); animation: rise .18s ease; }
+    .modal-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 9px; background: #122f3d; color: var(--cyan); font-size: 20px; }
     .modal h2 { margin: 15px 0 8px; font-size: 20px; }
     .modal p { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 0 0 16px; }
     .modal-summary { padding: 12px; border: 1px solid var(--line); background: #0b1829; border-radius: 11px; margin-bottom: 17px; font-size: 11px; color: #c9d7e9; line-height: 1.65; }
@@ -178,7 +178,11 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+    @keyframes progress { from { transform: translateX(-100%); } to { transform: translateX(460%); } }
 
+    @media (max-width: 1300px) {
+      .modules { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
     @media (max-width: 1080px) {
       .modules { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .layout { grid-template-columns: minmax(0, 1fr) 300px; }
@@ -199,7 +203,7 @@
     <div class="brand">
       <div class="brand-mark">W</div>
       <div class="brand-name">WinLean</div>
-      <span class="version" id="version">v1.2.0</span>
+      <span class="version" id="version">v1.3.0</span>
     </div>
     <div class="top-actions">
       <div class="admin-badge"><span>◆</span><span data-i18n="admin">Administrador</span></div>
@@ -263,13 +267,6 @@
       </aside>
     </div>
 
-    <section class="panel log-panel" id="log-panel">
-      <div class="log-head">
-        <div class="run-state"><span class="spinner" id="spinner"></span><span id="run-title">Executando otimizações…</span></div>
-        <div class="log-actions"><button class="mini" onclick="clearLog()" data-i18n="clearLog">Limpar log</button><button class="mini" id="log-toggle" onclick="toggleLog()">Ocultar</button></div>
-      </div>
-      <div class="log" id="log"></div>
-    </section>
   </main>
 
   <div class="modal-backdrop" id="modal">
@@ -280,6 +277,21 @@
       <div class="modal-summary" id="modal-summary"></div>
       <div class="modal-actions"><button class="secondary" onclick="closeConfirmation()" data-i18n="cancel">Cancelar</button><button class="primary" onclick="confirmAction()" id="confirm-button">Iniciar agora</button></div>
     </div>
+  </div>
+
+  <div class="run-backdrop" id="run-modal" role="dialog" aria-modal="true" aria-labelledby="run-title">
+    <section class="run-dialog">
+      <div class="log-head">
+        <div class="run-state"><span class="spinner" id="spinner"></span><span id="run-title">Executando otimizações…</span></div>
+        <div class="log-actions"><button class="mini" onclick="clearLog()" data-i18n="clearLog">Limpar log</button></div>
+      </div>
+      <div class="run-progress" id="run-progress"></div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="run-footer">
+        <span class="run-hint" id="run-hint" data-i18n="runningHint">Aguarde a conclusão. A janela permanecerá bloqueada durante as alterações.</span>
+        <button class="primary run-close" id="run-close" onclick="closeRunModal()" data-i18n="close" disabled>Fechar</button>
+      </div>
+    </section>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -313,8 +325,8 @@
     ];
 
     const TEXT = {
-      pt: { admin:'Administrador', eyebrow:'Windows limpo. Sem perder o controle.', title:'Seu Windows, mais leve.', subtitle:'Escolha o que deseja otimizar. Cada alteração é registrada antes de ser aplicada e pode ser desfeita depois.', safeTitle:'✓ Rollback integrado', safeText:'Journal JSON + ponto de restauração', presets:'Configuração rápida', minimal:'Mínimo', work:'Trabalho', gaming:'Jogos', full:'Completo', clear:'Limpar seleção', modulesTitle:'O que vamos otimizar', modulesSub:'Clique nos cards para personalizar', settings:'Configuração', settingsSub:'Revise antes de continuar', powerPlan:'Plano de energia', dryTitle:'Simular primeiro', dryText:'Mostra o resultado sem alterar o Windows', selected:'Selecionados', mode:'Modo', energy:'Energia', start:'Revisar e iniciar', revert:'Desfazer última execução', clearLog:'Limpar log', hideLog:'Ocultar', showLog:'Mostrar', cancel:'Cancelar', module:'módulo', modules:'módulos', real:'Aplicação real', dry:'Somente simulação', confirmTitle:'Tudo pronto?', confirmText:'O WinLean criará um ponto de restauração e registrará cada alteração antes de aplicar.', confirmGo:'Iniciar agora', revertTitle:'Desfazer alterações?', revertText:'O journal mais recente será executado ao contrário. Aplicativos removidos precisam ser reinstalados separadamente.', revertGo:'Desfazer agora', running:'Executando otimizações…', reverting:'Restaurando configurações…', success:'Concluído com sucesso', failed:'A execução terminou com erros', noModules:'Selecione pelo menos um módulo.' },
-      en: { admin:'Administrator', eyebrow:'A cleaner Windows. Without losing control.', title:'Your Windows, lighter.', subtitle:'Choose what to optimize. Every change is recorded before it is applied and can be rolled back later.', safeTitle:'✓ Built-in rollback', safeText:'JSON journal + restore point', presets:'Quick setup', minimal:'Minimal', work:'Work', gaming:'Gaming', full:'Full', clear:'Clear selection', modulesTitle:'What we will optimize', modulesSub:'Click the cards to customize', settings:'Configuration', settingsSub:'Review before continuing', powerPlan:'Power plan', dryTitle:'Preview first', dryText:'Shows the result without changing Windows', selected:'Selected', mode:'Mode', energy:'Power', start:'Review and start', revert:'Undo last run', clearLog:'Clear log', hideLog:'Hide', showLog:'Show', cancel:'Cancel', module:'module', modules:'modules', real:'Real application', dry:'Preview only', confirmTitle:'Ready to go?', confirmText:'WinLean will create a restore point and record each change before applying it.', confirmGo:'Start now', revertTitle:'Undo changes?', revertText:'The latest journal will be replayed backwards. Removed apps must be reinstalled separately.', revertGo:'Undo now', running:'Applying optimizations…', reverting:'Restoring settings…', success:'Completed successfully', failed:'The run finished with errors', noModules:'Select at least one module.' }
+      pt: { admin:'Administrador', eyebrow:'Windows limpo. Sem perder o controle.', title:'Seu Windows, mais leve.', subtitle:'Escolha o que deseja otimizar. Cada alteração é registrada antes de ser aplicada e pode ser desfeita depois.', safeTitle:'✓ Rollback integrado', safeText:'Journal JSON + ponto de restauração', presets:'Configuração rápida', minimal:'Mínimo', work:'Trabalho', gaming:'Jogos', full:'Completo', clear:'Limpar seleção', modulesTitle:'O que vamos otimizar', modulesSub:'Clique nos cards para personalizar', settings:'Configuração', settingsSub:'Revise antes de continuar', powerPlan:'Plano de energia', dryTitle:'Simular primeiro', dryText:'Mostra o resultado sem alterar o Windows', selected:'Selecionados', mode:'Modo', energy:'Energia', start:'Revisar e iniciar', revert:'Desfazer última execução', clearLog:'Limpar log', close:'Fechar', runningHint:'Aguarde a conclusão. A janela permanecerá bloqueada durante as alterações.', doneHint:'Execução finalizada. Revise o log ou feche esta janela.', cancel:'Cancelar', module:'módulo', modules:'módulos', real:'Aplicação real', dry:'Somente simulação', confirmTitle:'Tudo pronto?', confirmText:'O WinLean criará um ponto de restauração e registrará cada alteração antes de aplicar.', confirmGo:'Iniciar agora', revertTitle:'Desfazer alterações?', revertText:'O journal mais recente será executado ao contrário. Aplicativos removidos precisam ser reinstalados separadamente.', revertGo:'Desfazer agora', running:'Executando otimizações…', reverting:'Restaurando configurações…', success:'Concluído com sucesso', failed:'A execução terminou com erros', noModules:'Selecione pelo menos um módulo.' },
+      en: { admin:'Administrator', eyebrow:'A cleaner Windows. Without losing control.', title:'Your Windows, lighter.', subtitle:'Choose what to optimize. Every change is recorded before it is applied and can be rolled back later.', safeTitle:'✓ Built-in rollback', safeText:'JSON journal + restore point', presets:'Quick setup', minimal:'Minimal', work:'Work', gaming:'Gaming', full:'Full', clear:'Clear selection', modulesTitle:'What we will optimize', modulesSub:'Click the cards to customize', settings:'Configuration', settingsSub:'Review before continuing', powerPlan:'Power plan', dryTitle:'Preview first', dryText:'Shows the result without changing Windows', selected:'Selected', mode:'Mode', energy:'Power', start:'Review and start', revert:'Undo last run', clearLog:'Clear log', close:'Close', runningHint:'Please wait. The window will remain locked while changes are applied.', doneHint:'Run complete. Review the log or close this window.', cancel:'Cancel', module:'module', modules:'modules', real:'Real application', dry:'Preview only', confirmTitle:'Ready to go?', confirmText:'WinLean will create a restore point and record each change before applying it.', confirmGo:'Start now', revertTitle:'Undo changes?', revertText:'The latest journal will be replayed backwards. Removed apps must be reinstalled separately.', revertGo:'Undo now', running:'Applying optimizations…', reverting:'Restoring settings…', success:'Completed successfully', failed:'The run finished with errors', noModules:'Select at least one module.' }
     };
 
     const state = { language:'pt', selected:new Set(PRESETS.Work), dryRun:false, preset:'Work', pending:null, lastAction:'run', running:false };
@@ -345,7 +357,6 @@
       $('lang-pt').classList.toggle('active', state.language === 'pt');
       $('lang-en').classList.toggle('active', state.language === 'en');
       document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = tr(el.dataset.i18n));
-      $('log-toggle').textContent = tr($('log-panel').classList.contains('collapsed') ? 'showLog' : 'hideLog');
       renderPlans(); renderModules();
     }
 
@@ -388,21 +399,23 @@
     function confirmAction(){ const type=state.pending; state.lastAction=type||'run'; $('modal').classList.remove('open'); if(type==='run') post({cmd:'run',language:state.language,modules:[...state.selected],power_plan:$('power-plan').value,dry_run:state.dryRun}); else if(type==='revert') post({cmd:'revert',language:state.language}); state.pending=null; }
 
     function clearLog(){ $('log').innerHTML=''; }
-    function toggleLog(){ const collapsed=$('log-panel').classList.toggle('collapsed'); $('log-toggle').textContent=tr(collapsed?'showLog':'hideLog'); }
+    function closeRunModal(){ if(state.running) return; $('run-modal').classList.remove('open'); document.body.classList.remove('modal-open'); }
     let toastTimer;
     function showToast(message){ $('toast').textContent=message; $('toast').classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.remove('show'),5000); }
 
     window.WinLean = {
       init(config){ $('version').textContent=`v${config.version}`; setLanguage(config.language); },
-      onStarted(){ state.running=true; clearLog(); $('log-panel').classList.add('open'); $('log-panel').classList.remove('collapsed'); $('log-toggle').textContent=tr('hideLog'); $('spinner').className='spinner'; $('run-title').textContent=state.lastAction==='revert'?tr('reverting'):tr('running'); document.querySelectorAll('.module,.preset,select,.switch').forEach(el=>el.classList.add('locked')); updateSummary(); },
+      onStarted(){ state.running=true; clearLog(); $('run-modal').classList.add('open'); document.body.classList.add('modal-open'); $('run-close').disabled=true; $('run-progress').className='run-progress'; $('run-hint').textContent=tr('runningHint'); $('spinner').className='spinner'; $('run-title').textContent=state.lastAction==='revert'?tr('reverting'):tr('running'); document.querySelectorAll('.module,.preset,select,.switch').forEach(el=>el.classList.add('locked')); updateSummary(); },
       onLogs(lines){ const log=$('log'); const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<50; const fragment=document.createDocumentFragment(); lines.forEach(line=>{const div=document.createElement('div');div.className=`line ${line.kind}`;div.textContent=line.text;fragment.appendChild(div);});log.appendChild(fragment);if(atBottom)log.scrollTop=log.scrollHeight; },
-      onFinished(result){ state.running=false; $('spinner').className=`spinner ${result.ok?'done':'failed'}`; $('run-title').textContent=tr(result.ok?'success':'failed'); document.querySelectorAll('.locked').forEach(el=>el.classList.remove('locked')); updateSummary(); },
+      onFinished(result){ state.running=false; $('spinner').className=`spinner ${result.ok?'done':'failed'}`; $('run-progress').className=`run-progress ${result.ok?'done':'failed'}`; $('run-title').textContent=tr(result.ok?'success':'failed'); $('run-hint').textContent=tr('doneHint'); $('run-close').disabled=false; document.querySelectorAll('.locked').forEach(el=>el.classList.remove('locked')); updateSummary(); },
       onError(message){ showToast(message); }
     };
 
     renderPlans(); renderModules(); setLanguage('pt');
     $('modal').addEventListener('click', event => { if (event.target === $('modal')) closeConfirmation(); });
-    window.addEventListener('keydown', event => { if (event.key === 'Escape' && $('modal').classList.contains('open')) closeConfirmation(); });
+    $('run-modal').addEventListener('click', event => { if (event.target === $('run-modal')) closeRunModal(); });
+    window.addEventListener('keydown', event => { if (event.key !== 'Escape') return; if ($('modal').classList.contains('open')) closeConfirmation(); else if ($('run-modal').classList.contains('open')) closeRunModal(); });
+    if (location.protocol === 'file:' && location.hash === '#preview-run') setTimeout(() => { window.WinLean.onStarted(); window.WinLean.onLogs([{kind:'section',text:'Preparando o sistema'},{kind:'ok',text:'Ponto de restauração criado'},{kind:'plain',text:'Aplicando configurações com segurança…'}]); }, 0);
     window.addEventListener('DOMContentLoaded',()=>post({cmd:'ready'}));
   </script>
 </body>

@@ -242,7 +242,7 @@ try {
         $s.Arguments  = "-NoProfile -ExecutionPolicy Bypass -File `"$enginePath`" -Language $Lang"
     }
     $s.WorkingDirectory = $InstallTo
-    $s.IconLocation     = 'shell32.dll,21'
+    $s.IconLocation     = if ($hasUi -and -not $Cli) { "$uiPath,0" } else { 'shell32.dll,21' }
     $s.Description      = 'WinLean'
     $s.Save()
     Say $L.Shortcut 'Green' ' +'

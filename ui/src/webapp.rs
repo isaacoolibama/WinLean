@@ -12,7 +12,7 @@ use winit::dpi::LogicalSize;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop, EventLoopProxy};
 use winit::window::{Window, WindowId};
-use wry::{WebView, WebViewBuilder};
+use wry::{WebContext, WebView, WebViewBuilder};
 
 const HTML: &str = include_str!("../assets/index.html");
 const POLL_INTERVAL: Duration = Duration::from_millis(60);
@@ -67,7 +67,9 @@ struct WebApp {
     language: String,
     window: Option<Window>,
     webview: Option<WebView>,
+    web_context: Option<WebContext>,
     runner: Option<Runner>,
+    cleanup_scheduled: bool,
 }
 
 impl WebApp {
@@ -78,7 +80,9 @@ impl WebApp {
             language,
             window: None,
             webview: None,
+            web_context: None,
             runner: None,
+            cleanup_scheduled: false,
         }
     }
 
@@ -92,6 +96,19 @@ impl WebApp {
 
     fn emit_error(&self, message: impl Into<String>) {
         self.emit("onError", json!(message.into()));
+    }
+
+    fn exit_and_uninstall(&mut self, event_loop: &ActiveEventLoop) {
+        if !self.cleanup_scheduled {
+            if let Err(error) = runner::schedule_cleanup() {
+                runner::show_error_dialog(&format!(
+                    "Nao foi possivel agendar a limpeza do WinLean.\n\nCould not schedule WinLean cleanup.\n\n{error}"
+                ));
+            } else {
+                self.cleanup_scheduled = true;
+            }
+        }
+        event_loop.exit();
     }
 
     fn handle_ipc(&mut self, event_loop: &ActiveEventLoop, raw: &str) {
@@ -183,7 +200,7 @@ impl WebApp {
                         "Aguarde a operacao terminar antes de fechar. / Wait for the operation to finish.",
                     );
                 } else {
-                    event_loop.exit();
+                    self.exit_and_uninstall(event_loop);
                 }
             }
         }
@@ -251,6 +268,7 @@ impl ApplicationHandler<UserEvent> for WebApp {
             .with_title(format!("WinLean {}", env!("CARGO_PKG_VERSION")))
             .with_inner_size(LogicalSize::new(1180.0, 780.0))
             .with_min_inner_size(LogicalSize::new(920.0, 640.0))
+            .with_maximized(true)
             .with_resizable(true);
         let window = match event_loop.create_window(attributes) {
             Ok(window) => window,
@@ -262,7 +280,10 @@ impl ApplicationHandler<UserEvent> for WebApp {
         };
 
         let proxy = self.proxy.clone();
-        let webview = WebViewBuilder::new()
+        let data_directory =
+            std::env::temp_dir().join(format!("WinLean-WebView2-{}", std::process::id()));
+        let mut web_context = WebContext::new(Some(data_directory));
+        let webview = WebViewBuilder::new_with_web_context(&mut web_context)
             .with_html(HTML)
             .with_devtools(cfg!(debug_assertions))
             .with_general_autofill_enabled(false)
@@ -275,6 +296,7 @@ impl ApplicationHandler<UserEvent> for WebApp {
             Ok(webview) => {
                 self.window = Some(window);
                 self.webview = Some(webview);
+                self.web_context = Some(web_context);
             }
             Err(error) => {
                 runner::show_error_dialog(&format!(
@@ -303,7 +325,7 @@ impl ApplicationHandler<UserEvent> for WebApp {
                     "Aguarde a operacao terminar antes de fechar. / Wait for the operation to finish.",
                 );
             } else {
-                event_loop.exit();
+                self.exit_and_uninstall(event_loop);
             }
         }
     }
