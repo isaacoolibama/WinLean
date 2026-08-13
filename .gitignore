@@ -1,0 +1,19 @@
+# Artefatos locais de execução / local run artifacts
+logs/
+backups/
+dist/
+*.log
+*.json.bak
+
+# Rust
+ui/target/
+
+# Editores / editors
+.vscode/
+.idea/
+*.swp
+
+# SO / OS
+Thumbs.db
+desktop.ini
+.DS_Store

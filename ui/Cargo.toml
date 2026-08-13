@@ -1,0 +1,25 @@
+[package]
+name        = "winlean-ui"
+version     = "1.1.0"
+edition     = "2021"
+rust-version = "1.74"
+description = "Interface de terminal do WinLean / WinLean terminal interface"
+authors     = ["Isaac Oolibama R. Lacerda"]
+license     = "MIT"
+repository  = "https://github.com/isaacoolibama/WinLean"
+
+[[bin]]
+name = "winlean"
+path = "src/main.rs"
+
+[dependencies]
+# ratatui reexporta o crossterm na versao correta, o que evita conflito de versao
+# entre os dois crates. Por isso o crossterm nao aparece como dependencia direta.
+ratatui = "0.29"
+
+[profile.release]
+opt-level     = "z"      # binario pequeno: a TUI nao e CPU-bound
+lto           = true
+codegen-units = 1
+panic         = "abort"
+strip         = true

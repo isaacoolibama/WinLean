@@ -1,0 +1,47 @@
+# Changelog
+
+Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
+versionamento segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
+
+## [1.1.0] - 2026-08-13
+
+### Adicionado / Added
+- **Interface de terminal em Rust** (`ui/`, ratatui): lista de módulos com painel de
+  detalhes, presets, seletor de plano de energia, log com streaming em tempo real,
+  autoscroll e rolagem manual.
+- **Instalador de uma linha** (`install.ps1`): eleva, baixa para
+  `%LOCALAPPDATA%\WinLean`, cria atalho no menu Iniciar e abre a interface.
+  Cai para o menu PowerShell quando não há binário publicado.
+- **Internacionalização PT/EN** na interface e no motor, com português como padrão.
+  Alternância em tempo real pela tecla `L`.
+- **Módulo de plano de energia** com seis opções (Manter, Automático, Equilibrado,
+  Alto desempenho, Desempenho máximo, Economia). Desempenho máximo é duplicado
+  antes de ser ativado e o resultado é verificado, porque muitos notebooks recusam
+  o esquema.
+- Workflows de CI: build do binário Rust por tag, análise do PowerShell com
+  PSScriptAnalyzer e verificação de sintaxe que reprova o build em caso de erro.
+
+### Alterado / Changed
+- O plano de energia saiu do módulo de performance e virou módulo próprio.
+- `Run.bat` prefere a interface Rust e cai para o menu PowerShell.
+- Toda string visível ao usuário no motor passou a ser escrita como `pt|en` e
+  resolvida em tempo de execução.
+
+## [1.0.0] - 2026-08-13
+
+### Adicionado / Added
+- Motor de rollback por journal: cada valor de registro, serviço e tarefa agendada
+  é gravado com o estado anterior e pode ser desfeito com `-Revert`.
+- Quatro presets: `Minimal`, `Work`, `Gaming`, `Full`.
+- Oito módulos: bloatware, privacidade, Windows AI, serviços, interface,
+  performance, jogos e limpeza de disco.
+- Lógica adaptativa por hardware: RAM, SSD vs HDD, notebook vs desktop e domínio.
+- Lista de apps protegidos contra curingas.
+- Modo de simulação (`-DryRun`).
+- Menu interativo em console.
+- Ponto de restauração com bypass temporário do limite de 24h.
+
+### Notas / Notes
+- Memory Compression permanece habilitada de propósito.
+- O Prefetch não é limpo de propósito.
+- Windows Search, Spooler, Windows Update e Defender nunca são modificados.

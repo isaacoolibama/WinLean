@@ -1,0 +1,50 @@
+name: lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  powershell:
+    name: PSScriptAnalyzer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse and analyse
+        shell: pwsh
+        run: |
+          # Erro de sintaxe deve reprovar o build; avisos de estilo apenas informam.
+          $errors = $null
+          foreach ($f in @('WinLean.ps1','install.ps1')) {
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $f), [ref]$null, [ref]$errors) | Out-Null
+            if ($errors) { $errors | Format-List; throw "Syntax errors in $f" }
+          }
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          Invoke-ScriptAnalyzer -Path . -Recurse -Severity Warning,Error |
+            Format-Table -AutoSize
+
+  rust:
+    name: Rust quality
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - working-directory: ui
+        run: cargo fmt --all -- --check
+      - working-directory: ui
+        run: cargo check --locked --all-targets
+      - working-directory: ui
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+  rust-msrv:
+    name: Rust 1.74 compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.74.0
+      - working-directory: ui
+        run: cargo check --locked --all-targets
